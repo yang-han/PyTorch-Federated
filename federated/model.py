@@ -7,16 +7,15 @@ class Client(object):
     def __init__(self, client_id: int, model: ComputationModel, train_loader, test_loader):
         self.id = client_id
         self.model = model
-        # self.local_model =
         self.train_loader = train_loader
         self.test_loader = test_loader
 
     def train_model(self, epochs, batch_size):
         """  
-            return:
-                (num_train_samples, update)
+        return:
+            (num_train_samples, update)
                 num_train_samples:              int
-                update: model.parameters()      generator<Tensor>
+                update: model.parameters()      [Tensor]
         """
         for i in range(epochs):
             update = self._train(self.train_loader)
@@ -24,6 +23,10 @@ class Client(object):
         return num_train_samples, update
 
     def _train(self, train_loader):
+        """
+        returns:
+            update: [Tensor] 
+        """
         local_model = self.model.clone()
         local_parameters_generator = local_model.train(self.train_loader)
         update = []
@@ -79,7 +82,6 @@ class Server(object):
         for i, update in final_update:
             final_update[i] /= total_samples
         self.model.update(final_update)
-        # self.model.update(self.updates)
 
 
 # class ServerModel(object):
@@ -122,7 +124,7 @@ class ComputationModel(object):
     def train(self, train_loader):
         """
             Returns:
-                model.parameters()
+                model.parameters():     generator<Tensor>
         """
         for data, target in train_loader:
             output = self.model(data)
