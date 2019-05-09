@@ -7,7 +7,7 @@ class Client(object):
     def __init__(self, client_id: int, model: ComputationModel, train_loader, test_loader):
         self.id = client_id
         self.model = model
-        # self.local_model = 
+        # self.local_model =
         self.train_loader = train_loader
         self.test_loader = test_loader
 
@@ -48,6 +48,15 @@ class Server(object):
     def online(self):
         return self.clients
 
+    def send_to_clients(self):
+        for client in self.select_clients:
+            client.model = self.model
+
+    ####
+    #   updates = server.train_model()
+    #   server.update_model(updates)
+    #   server.send_to_clients()
+    #
     def train_model(self):
         self.updates = []
         clients = self.selected_clients
@@ -58,14 +67,17 @@ class Server(object):
     def update_model(self):
         """
         Args:
-            updates: [(num_train_samples, update), ...]
+            updates:    [(num_train_samples, update), ...]
+                update:     [Tensor]
         """
         total_samples = 0
-        final_update = 0
+        final_update = [0 for _ in self.model.model.parameters()]
         for num_train_samples, update in updates:
             total_samples += num_train_samples
-            final_update = num_train_samples*update
-        final_update /= total_samples
+            for i, param in enumerate(update):
+                final_update[i] += param * num_train_samples
+        for i, update in final_update:
+            final_update[i] /= total_samples
         self.model.update(final_update)
         # self.model.update(self.updates)
 
@@ -94,7 +106,6 @@ class Server(object):
 
 #     def train(self):
 #         update = 0
-
 #         return update
 
 
@@ -123,3 +134,11 @@ class ComputationModel(object):
 
     def test(self):
         pass
+
+    def update(self, update):
+        """
+        Args:
+            update:     [Tensor]
+        """
+        for i, param in enumerate(self.model.parameters()):
+            param.data = update[i]
