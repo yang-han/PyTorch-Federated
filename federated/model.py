@@ -14,8 +14,8 @@ class Client(object):
         """  
         return:
             (num_train_samples, update)
-                num_train_samples:              int
-                update: model.parameters()      [Tensor]
+                num_train_samples:                  int
+                update:     model.parameters()      [Tensor]
         """
         for i in range(epochs):
             update = self._train(self.train_loader)
